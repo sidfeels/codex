@@ -1,6 +1,5 @@
 import type { ApplyPatchCommand, ApprovalPolicy } from "../../approvals.js";
-import type { CommandConfirmation, AgentLoop } from "../../utils/agent/agent-loop.js";
-import type { OllamaAgentLoop } from "../../utils/agent/ollama-agent-loop.js";
+import type { CommandConfirmation, BaseAgentLoop } from "../../utils/agent/base-agent-loop.js";
 import type { AppConfig } from "../../utils/config.js";
 import type { ColorName } from "chalk";
 import type { ResponseItem } from "openai/resources/responses/responses.mjs";
@@ -16,7 +15,7 @@ import TerminalMessageHistory from "./terminal-message-history.js";
 import { formatCommandForDisplay } from "../../format-command.js";
 import { useConfirmation } from "../../hooks/use-confirmation.js";
 import { useTerminalSize } from "../../hooks/use-terminal-size.js";
-import { createAgentLoop } from "../../utils/agent/agent-loop.js";
+import { createAgentLoop } from "../../utils/model-utils.js";
 import { log, isLoggingEnabled } from "../../utils/agent/log.js";
 import { createInputItem } from "../../utils/input-utils.js";
 import { getAvailableModels } from "../../utils/model-utils.js";
@@ -75,7 +74,7 @@ export default function TerminalChat({
 
   // Keep a single agent instance alive across renders;
   // recreate only when model/instructions/approvalPolicy change.
-  const agentRef = React.useRef<AgentLoop | OllamaAgentLoop>();
+  const agentRef = React.useRef<BaseAgentLoop>();
   const [, forceUpdate] = React.useReducer((c) => c + 1, 0); // trigger re‑render
 
   // ────────────────────────────────────────────────────────────────

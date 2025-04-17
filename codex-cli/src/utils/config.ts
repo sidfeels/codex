@@ -36,9 +36,9 @@ export const OPENAI_TIMEOUT_MS =
 export const OPENAI_BASE_URL = process.env["OPENAI_BASE_URL"] || "";
 export let OPENAI_API_KEY = process.env["OPENAI_API_KEY"] || "";
 
-// Ollama configuration
-export const OLLAMA_API_URL = process.env["OLLAMA_API_URL"] || "http://localhost:11434";
-export const OLLAMA_ENABLED = process.env["OLLAMA_ENABLED"] !== "false";
+// These will be used in the second PR for Ollama support
+// export const OLLAMA_API_URL = process.env["OLLAMA_API_URL"] || "http://localhost:11434";
+// export const OLLAMA_ENABLED = process.env["OLLAMA_ENABLED"] !== "false";
 
 export function setApiKey(apiKey: string): void {
   OPENAI_API_KEY = apiKey;
@@ -66,7 +66,7 @@ export type OllamaConfig = {
 // propagating to existing users until they explicitly set a model.
 export const EMPTY_STORED_CONFIG: StoredConfig = { model: "" };
 
-// Pre‑stringified JSON variant so we don’t stringify repeatedly.
+// Pre‑stringified JSON variant so we don't stringify repeatedly.
 const EMPTY_CONFIG_JSON = JSON.stringify(EMPTY_STORED_CONFIG, null, 2) + "\n";
 
 export type MemoryConfig = {
@@ -324,14 +324,9 @@ export const loadConfig = (
     config.fullAutoErrorMode = storedConfig.fullAutoErrorMode;
   }
 
-  // Include Ollama configuration if explicitly set, otherwise use environment defaults
+  // Include Ollama configuration if explicitly set
   if (storedConfig.ollama !== undefined) {
     config.ollama = storedConfig.ollama;
-  } else if (OLLAMA_ENABLED) {
-    config.ollama = {
-      enabled: OLLAMA_ENABLED,
-      apiUrl: OLLAMA_API_URL,
-    };
   }
 
   return config;
@@ -364,8 +359,12 @@ export const saveConfig = (
   const ext = extname(targetPath).toLowerCase();
   const configToSave: StoredConfig = { 
     model: config.model,
-    ollama: config.ollama,
   };
+  
+  // Include Ollama configuration if it exists
+  if (config.ollama) {
+    configToSave.ollama = config.ollama;
+  }
   
   if (ext === ".yaml" || ext === ".yml") {
     writeFileSync(targetPath, dumpYaml(configToSave), "utf-8");

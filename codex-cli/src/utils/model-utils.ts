@@ -1,18 +1,23 @@
-import { OPENAI_API_KEY, OLLAMA_ENABLED } from "./config.js";
+import { OPENAI_API_KEY } from "./config.js";
 import OpenAI from "openai";
-import { 
-  fetchOllamaModels, 
-  formatOllamaModelName, 
-  isOllamaModel 
-} from "./ollama-client.js";
+// These imports will be used in the second PR for Ollama support
+// import { 
+//   fetchOllamaModels, 
+//   formatOllamaModelName, 
+//   isOllamaModel 
+// } from "./ollama-client.js";
+import { BaseAgentLoop, AgentLoopParams } from "./agent/base-agent-loop.js";
+import { OpenAIAgentLoop } from "./agent/openai-agent-loop.js";
 
 const MODEL_LIST_TIMEOUT_MS = 2_000; // 2 seconds
-export const RECOMMENDED_OPENAI_MODELS: Array<string> = ["o4-mini", "o3"];
-export const RECOMMENDED_OLLAMA_MODELS: Array<string> = ["gemma3:1b", "llama3:8b"];
-export const RECOMMENDED_MODELS: Array<string> = [
-  ...RECOMMENDED_OPENAI_MODELS,
-  ...RECOMMENDED_OLLAMA_MODELS.map(formatOllamaModelName)
-];
+export const RECOMMENDED_MODELS: Array<string> = ["o4-mini", "o3"];
+// These will be used in the second PR for Ollama support
+// export const RECOMMENDED_OPENAI_MODELS: Array<string> = ["o4-mini", "o3"];
+// export const RECOMMENDED_OLLAMA_MODELS: Array<string> = ["gemma3:1b", "llama3:8b"];
+// export const RECOMMENDED_MODELS: Array<string> = [
+//   ...RECOMMENDED_OPENAI_MODELS,
+//   ...RECOMMENDED_OLLAMA_MODELS.map(formatOllamaModelName)
+// ];
 
 /**
  * Background model loader / cache.
@@ -49,25 +54,26 @@ async function fetchModels(): Promise<Array<string>> {
     } catch (error) {
       console.error("Error fetching OpenAI models:", error);
       // Fall back to recommended models for OpenAI
-      models.push(...RECOMMENDED_OPENAI_MODELS);
+      models.push(...RECOMMENDED_MODELS);
     }
   } else {
     // If no API key, use recommended OpenAI models
-    models.push(...RECOMMENDED_OPENAI_MODELS);
+    models.push(...RECOMMENDED_MODELS);
   }
 
-  // Fetch Ollama models if enabled
-  if (OLLAMA_ENABLED) {
-    try {
-      const ollamaModels = await fetchOllamaModels();
-      // Add prefix to Ollama models to distinguish them
-      models.push(...ollamaModels.map(formatOllamaModelName));
-    } catch (error) {
-      console.error("Error fetching Ollama models:", error);
-      // Fall back to recommended models for Ollama
-      models.push(...RECOMMENDED_OLLAMA_MODELS.map(formatOllamaModelName));
-    }
-  }
+  // This will be used in the second PR for Ollama support
+  // // Fetch Ollama models if enabled
+  // if (OLLAMA_ENABLED) {
+  //   try {
+  //     const ollamaModels = await fetchOllamaModels();
+  //     // Add prefix to Ollama models to distinguish them
+  //     models.push(...ollamaModels.map(formatOllamaModelName));
+  //   } catch (error) {
+  //     console.error("Error fetching Ollama models:", error);
+  //     // Fall back to recommended models for Ollama
+  //     models.push(...RECOMMENDED_OLLAMA_MODELS.map(formatOllamaModelName));
+  //   }
+  // }
 
   return models.sort();
 }
@@ -78,6 +84,18 @@ export function preloadModels(): void {
     // `getAvailableModels()` instead.
     void getAvailableModels();
   }
+}
+
+/**
+ * Factory function to create the appropriate agent loop based on the model.
+ * 
+ * @param params The parameters for the agent loop.
+ * @returns An instance of BaseAgentLoop appropriate for the specified model.
+ */
+export function createAgentLoop(params: AgentLoopParams): BaseAgentLoop {
+  // For now, we only support OpenAI models
+  // In the second PR, we'll add support for Ollama models
+  return new OpenAIAgentLoop(params);
 }
 
 export async function getAvailableModels(): Promise<Array<string>> {
@@ -104,10 +122,11 @@ export async function isModelSupportedForResponses(
     return true;
   }
 
-  // For Ollama models, check if Ollama is enabled
-  if (isOllamaModel(model) && !OLLAMA_ENABLED) {
-    return false;
-  }
+  // This will be used in the second PR for Ollama support
+  // // For Ollama models, check if Ollama is enabled
+  // if (isOllamaModel(model) && !OLLAMA_ENABLED) {
+  //   return false;
+  // }
 
   try {
     const models = await Promise.race<Array<string>>([

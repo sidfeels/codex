@@ -7,13 +7,12 @@ import "dotenv/config";
 
 import type { AppRollout } from "./app";
 import type { ApprovalPolicy } from "./approvals";
-import type { CommandConfirmation } from "./utils/agent/agent-loop";
+import type { CommandConfirmation } from "./utils/agent/base-agent-loop";
 import type { AppConfig } from "./utils/config";
 import type { ResponseItem } from "openai/resources/responses/responses";
 
 import App from "./app";
 import { runSinglePass } from "./cli_singlepass";
-import { AgentLoop } from "./utils/agent/agent-loop";
 import { initLogger } from "./utils/agent/log";
 import { ReviewDecision } from "./utils/agent/review";
 import { AutoApprovalMode } from "./utils/auto-approval-mode";
@@ -26,6 +25,7 @@ import { createInputItem } from "./utils/input-utils";
 import {
   isModelSupportedForResponses,
   preloadModels,
+  createAgentLoop,
 } from "./utils/model-utils.js";
 import { parseToolCall } from "./utils/parsers";
 import { onExit, setInkRenderer } from "./utils/terminal";
@@ -400,7 +400,7 @@ async function runQuietMode({
   approvalPolicy: ApprovalPolicy;
   config: AppConfig;
 }): Promise<void> {
-  const agent = new AgentLoop({
+  const agent = createAgentLoop({
     model: config.model,
     config: config,
     instructions: config.instructions,
